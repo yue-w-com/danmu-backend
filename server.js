@@ -50,8 +50,13 @@ app.get('/history', async (req, res) => {
   res.json(data.reverse());
 });
 
-// ✅ New endpoint: clear all history
+// ✅ Password-protected clear endpoint
 app.post('/clear', async (req, res) => {
+  const providedSecret = req.headers['x-admin-secret'];
+  if (providedSecret !== process.env.ADMIN_SECRET) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
   await Danmu.deleteMany({});
   res.sendStatus(200);
 });
