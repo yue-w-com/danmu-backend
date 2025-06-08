@@ -5,29 +5,26 @@ const http = require('http');
 const cors = require('cors');
 require('dotenv').config();
 
-// Connect to MongoDB Atlas
+// Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
 
-// Define Mongoose schema and model
+// Define schema and model
 const Danmu = mongoose.model('Danmu', new mongoose.Schema({
   text: String,
   timestamp: { type: Date, default: Date.now },
 }));
 
-// Initialize Express app
 const app = express();
-app.use(cors()); // Enable CORS for all origins
+app.use(cors());
 
-// Create HTTP and WebSocket server
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 let clients = [];
 
-// WebSocket connection logic
 wss.on('connection', ws => {
   clients.push(ws);
 
@@ -47,10 +44,16 @@ wss.on('connection', ws => {
   });
 });
 
-// REST endpoint for history
+// Endpoint: get recent danmu
 app.get('/history', async (req, res) => {
   const data = await Danmu.find().sort({ timestamp: -1 }).limit(50);
   res.json(data.reverse());
+});
+
+// ✅ New endpoint: clear all history
+app.post('/clear', async (req, res) => {
+  await Danmu.deleteMany({});
+  res.sendStatus(200);
 });
 
 // Start server
